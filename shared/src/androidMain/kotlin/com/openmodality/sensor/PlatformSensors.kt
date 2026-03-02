@@ -2,16 +2,25 @@ package com.openmodality.sensor
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ImageFormat
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.location.Geocoder
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.BatteryManager
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
+import android.util.Base64
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -19,10 +28,13 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.openmodality.sensor.models.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.math.log10
+import kotlin.math.sqrt
 
 actual class PlatformSensors {
 
@@ -74,9 +86,105 @@ actual class PlatformSensors {
 
     // -- Vision --
 
+    @SuppressLint("MissingPermission")
     actual suspend fun takePhoto(camera: CameraType, resolution: Resolution): PhotoResult {
-        // CameraX implementation will be added in Phase 2
-        throw UnsupportedOperationException("Camera not yet implemented - coming in Phase 2")
+        return withTimeoutOrNull(5000L) {
+            suspendCancellableCoroutine { cont ->
+                val cameraManager = appContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+                val handlerThread = HandlerThread("CameraThread").also { it.start() }
+                val handler = Handler(handlerThread.looper)
+
+                // Find camera ID matching requested facing
+                val targetFacing = when (camera) {
+                    CameraType.FRONT -> CameraCharacteristics.LENS_FACING_FRONT
+                    CameraType.BACK -> CameraCharacteristics.LENS_FACING_BACK
+                }
+                val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
+                    cameraManager.getCameraCharacteristics(id)
+                        .get(CameraCharacteristics.LENS_FACING) == targetFacing
+                } ?: cameraManager.cameraIdList.first()
+
+                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+                val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+                val jpegSizes = map.getOutputSizes(ImageFormat.JPEG)
+                val size = when (resolution) {
+                    Resolution.LOW -> jpegSizes.minByOrNull { it.width * it.height }!!
+                    Resolution.HIGH -> jpegSizes.maxByOrNull { it.width * it.height }!!
+                    Resolution.MEDIUM -> jpegSizes.sortedBy { it.width * it.height }
+                        .let { it[it.size / 2] }
+                }
+
+                val imageReader = ImageReader.newInstance(size.width, size.height, ImageFormat.JPEG, 1)
+                var cameraDevice: CameraDevice? = null
+
+                fun cleanup() {
+                    try { cameraDevice?.close() } catch (_: Exception) {}
+                    try { imageReader.close() } catch (_: Exception) {}
+                    handlerThread.quitSafely()
+                }
+
+                imageReader.setOnImageAvailableListener({ reader ->
+                    val image = reader.acquireLatestImage() ?: return@setOnImageAvailableListener
+                    try {
+                        val buffer = image.planes[0].buffer
+                        val bytes = ByteArray(buffer.remaining())
+                        buffer.get(bytes)
+                        val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        cleanup()
+                        cont.resume(
+                            PhotoResult(
+                                base64 = base64,
+                                mimeType = "image/jpeg",
+                                width = size.width,
+                                height = size.height,
+                                camera = camera.name.lowercase(),
+                                timestamp = System.currentTimeMillis()
+                            )
+                        )
+                    } catch (e: Exception) {
+                        cleanup()
+                        cont.resumeWithException(e)
+                    } finally {
+                        image.close()
+                    }
+                }, handler)
+
+                cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
+                    override fun onOpened(device: CameraDevice) {
+                        cameraDevice = device
+                        val surface = imageReader.surface
+                        device.createCaptureSession(
+                            listOf(surface),
+                            object : android.hardware.camera2.CameraCaptureSession.StateCallback() {
+                                override fun onConfigured(session: android.hardware.camera2.CameraCaptureSession) {
+                                    val request = device.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+                                        addTarget(surface)
+                                    }.build()
+                                    session.capture(request, null, handler)
+                                }
+                                override fun onConfigureFailed(session: android.hardware.camera2.CameraCaptureSession) {
+                                    cleanup()
+                                    cont.resumeWithException(RuntimeException("Camera session configuration failed"))
+                                }
+                            },
+                            handler
+                        )
+                    }
+                    override fun onDisconnected(device: CameraDevice) {
+                        device.close()
+                        handlerThread.quitSafely()
+                        cont.resumeWithException(RuntimeException("Camera disconnected"))
+                    }
+                    override fun onError(device: CameraDevice, error: Int) {
+                        device.close()
+                        handlerThread.quitSafely()
+                        cont.resumeWithException(RuntimeException("Camera error: $error"))
+                    }
+                }, handler)
+
+                cont.invokeOnCancellation { cleanup() }
+            }
+        } ?: throw RuntimeException("Camera capture timed out")
     }
 
     actual suspend fun scanLidar(): String? = null // Not available on Android
@@ -85,8 +193,50 @@ actual class PlatformSensors {
 
     @SuppressLint("MissingPermission")
     actual suspend fun recordAudio(durationSeconds: Int, transcribe: Boolean): AudioResult {
-        // Basic audio recording for ambient level measurement
-        throw UnsupportedOperationException("Audio recording not yet implemented - coming in Phase 2")
+        val timeoutMs = (durationSeconds * 1000L) + 2000L
+        return withTimeoutOrNull(timeoutMs) {
+            val sampleRate = 44100
+            val bufferSize = AudioRecord.getMinBufferSize(
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+            )
+            val recorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize
+            )
+            recorder.startRecording()
+            val startTime = System.currentTimeMillis()
+            val endTime = startTime + (durationSeconds * 1000L)
+            var rmsSum = 0.0
+            var chunkCount = 0
+
+            while (System.currentTimeMillis() < endTime) {
+                val buffer = ShortArray(bufferSize)
+                val read = recorder.read(buffer, 0, bufferSize)
+                if (read > 0) {
+                    val sumSq = buffer.take(read).sumOf { it.toLong() * it.toLong() }
+                    val rms = sqrt(sumSq.toDouble() / read)
+                    rmsSum += rms
+                    chunkCount++
+                }
+            }
+            recorder.stop()
+            recorder.release()
+
+            val avgRms = if (chunkCount > 0) rmsSum / chunkCount else 0.0
+            val avgDb = if (avgRms > 0) (20 * log10(avgRms / Short.MAX_VALUE)).toFloat() else -100f
+
+            AudioResult(
+                transcription = null,
+                durationSeconds = durationSeconds.toDouble(),
+                averageDecibels = avgDb,
+                timestamp = startTime
+            )
+        } ?: throw RuntimeException("Audio recording timed out")
     }
 
     @SuppressLint("MissingPermission")

@@ -4,9 +4,13 @@ package com.openmodality.sensor
 
 import com.openmodality.sensor.models.*
 import kotlinx.cinterop.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import platform.AVFAudio.*
+import platform.AVFoundation.*
 import platform.CoreLocation.*
+import platform.CoreMedia.*
 import platform.CoreMotion.*
 import platform.Foundation.*
 import platform.UIKit.UIDevice
@@ -15,6 +19,7 @@ import platform.UIKit.UIScreen
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.math.sqrt
 
 actual class PlatformSensors {
 
@@ -58,7 +63,92 @@ actual class PlatformSensors {
     // -- Vision --
 
     actual suspend fun takePhoto(camera: CameraType, resolution: Resolution): PhotoResult {
-        throw UnsupportedOperationException("Camera not yet implemented - coming in Phase 2")
+        return withTimeoutOrNull(5000L) {
+            suspendCancellableCoroutine { cont ->
+                val session = AVCaptureSession()
+
+                // Set preset by resolution
+                session.sessionPreset = when (resolution) {
+                    Resolution.LOW -> AVCaptureSessionPresetLow
+                    Resolution.MEDIUM -> AVCaptureSessionPresetMedium
+                    Resolution.HIGH -> AVCaptureSessionPresetHigh
+                }
+
+                // Select device by camera position
+                val position = when (camera) {
+                    CameraType.FRONT -> AVCaptureDevicePositionFront
+                    CameraType.BACK -> AVCaptureDevicePositionBack
+                }
+                val device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
+                    .let { default ->
+                        // Try to get exact position
+                        AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo)
+                            .filterIsInstance<AVCaptureDevice>()
+                            .firstOrNull { it.position == position } ?: default
+                    } ?: run {
+                        cont.resumeWithException(RuntimeException("No camera device available"))
+                        return@suspendCancellableCoroutine
+                    }
+
+                val input = try {
+                    AVCaptureDeviceInput.deviceInputWithDevice(device, null) as? AVCaptureDeviceInput
+                        ?: run {
+                            cont.resumeWithException(RuntimeException("Cannot create camera input"))
+                            return@suspendCancellableCoroutine
+                        }
+                } catch (e: Exception) {
+                    cont.resumeWithException(e)
+                    return@suspendCancellableCoroutine
+                }
+
+                val photoOutput = AVCapturePhotoOutput()
+
+                if (!session.canAddInput(input) || !session.canAddOutput(photoOutput)) {
+                    cont.resumeWithException(RuntimeException("Cannot configure capture session"))
+                    return@suspendCancellableCoroutine
+                }
+                session.addInput(input)
+                session.addOutput(photoOutput)
+                session.startRunning()
+
+                val delegate = object : NSObject(), AVCapturePhotoCaptureDelegateProtocol {
+                    override fun captureOutput(
+                        output: AVCapturePhotoOutput,
+                        didFinishProcessingPhoto: AVCapturePhoto,
+                        error: NSError?
+                    ) {
+                        session.stopRunning()
+                        if (error != null) {
+                            cont.resumeWithException(RuntimeException("Photo capture error: ${error.localizedDescription}"))
+                            return
+                        }
+                        val data = didFinishProcessingPhoto.fileDataRepresentation()
+                        if (data == null) {
+                            cont.resumeWithException(RuntimeException("No photo data"))
+                            return
+                        }
+                        val base64 = data.base64EncodedStringWithOptions(0u)
+                        val resolvedSettings = didFinishProcessingPhoto.resolvedSettings
+                        val dims = resolvedSettings.photoDimensions
+                        cont.resume(
+                            PhotoResult(
+                                base64 = base64,
+                                mimeType = "image/jpeg",
+                                width = dims.useContents { width.toInt() },
+                                height = dims.useContents { height.toInt() },
+                                camera = camera.name.lowercase(),
+                                timestamp = currentTimeMs()
+                            )
+                        )
+                    }
+                }
+
+                val settings = AVCapturePhotoSettings.photoSettings()
+                photoOutput.capturePhotoWithSettings(settings, delegate)
+
+                cont.invokeOnCancellation { session.stopRunning() }
+            }
+        } ?: throw RuntimeException("Camera capture timed out")
     }
 
     actual suspend fun scanLidar(): String? = null
@@ -66,7 +156,56 @@ actual class PlatformSensors {
     // -- Audio --
 
     actual suspend fun recordAudio(durationSeconds: Int, transcribe: Boolean): AudioResult {
-        throw UnsupportedOperationException("Audio recording not yet implemented - coming in Phase 2")
+        val startTime = currentTimeMs()
+        val audioSession = AVAudioSession.sharedInstance()
+        audioSession.setCategory(AVAudioSessionCategoryRecord, error = null)
+        audioSession.setActive(true, error = null)
+
+        val tempUrl = NSURL.fileURLWithPath(
+            NSTemporaryDirectory() + "openmodality_rec_${startTime}.m4a"
+        )
+        val recorderSettings = mapOf<Any?, Any?>(
+            AVFormatIDKey to 1633772320,  // kAudioFormatMPEG4AAC
+            AVSampleRateKey to 44100.0,
+            AVNumberOfChannelsKey to 1
+        )
+
+        val recorder = AVAudioRecorder(uRL = tempUrl, settings = recorderSettings, error = null)
+            ?: run {
+                audioSession.setActive(false, error = null)
+                return AudioResult(
+                    transcription = null,
+                    durationSeconds = durationSeconds.toDouble(),
+                    averageDecibels = null,
+                    timestamp = startTime
+                )
+            }
+
+        recorder.meteringEnabled = true
+        recorder.record()
+
+        val dbReadings = mutableListOf<Float>()
+        val iterations = durationSeconds * 10  // 100ms intervals
+        repeat(iterations) {
+            delay(100L)
+            recorder.updateMeters()
+            dbReadings.add(recorder.averagePowerForChannel(0UL))
+        }
+
+        recorder.stop()
+        audioSession.setActive(false, error = null)
+
+        // Delete temp file
+        NSFileManager.defaultManager.removeItemAtURL(tempUrl, error = null)
+
+        val avgDb = if (dbReadings.isNotEmpty()) dbReadings.average().toFloat() else null
+
+        return AudioResult(
+            transcription = null,
+            durationSeconds = durationSeconds.toDouble(),
+            averageDecibels = avgDb,
+            timestamp = startTime
+        )
     }
 
     actual suspend fun getAmbientSoundLevel(): AmbientSoundResult {

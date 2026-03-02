@@ -124,16 +124,14 @@ sealed class ContentBlock {
     @Serializable
     @SerialName("text")
     data class Text(
-        val text: String,
-        val type: String = "text"
+        val text: String
     ) : ContentBlock()
 
     @Serializable
     @SerialName("image")
     data class Image(
         val data: String,
-        val mimeType: String,
-        val type: String = "image"
+        val mimeType: String
     ) : ContentBlock()
 }
 
