@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>Open Modality</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Open Modality needs location access to provide GPS data to connected AI agents.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Open Modality needs location access to provide GPS data to connected AI agents.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Open Modality needs camera access to provide visual data to connected AI agents.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Open Modality needs microphone access to provide audio data to connected AI agents.</string>
+    <key>NSMotionUsageDescription</key>
+    <string>Open Modality needs motion sensor access to provide movement data to connected AI agents.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Open Modality needs Bluetooth access to scan nearby devices for connected AI agents.</string>
+    <key>NFCReaderUsageDescription</key>
+    <string>Open Modality needs NFC access to read tags for connected AI agents.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Open Modality runs an MCP server for AI agents to connect to on the local network.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_http._tcp</string>
+    </array>
+</dict>
+</plist>
