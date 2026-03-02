@@ -1,7 +1,9 @@
 <p align="center">
-  <h1 align="center">Open Modality</h1>
-  <p align="center">Give AI senses. Your phone's sensors as MCP tools.</p>
+  <img src="assets/open-modality.svg" width="300" alt="Open Modality Logo">
 </p>
+
+<h1 align="center">Open Modality</h1>
+<p align="center">Give AI senses. Your phone's sensors as MCP tools.</p>
 
 <p align="center">
   <a href="#quickstart">Quickstart</a> ·

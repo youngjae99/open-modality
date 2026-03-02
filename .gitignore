@@ -28,3 +28,20 @@ iosApp/.build/
 *.keystore
 *.jks
 iosApp/build/
+
+# Logs
+*.log
+*.log.*
+logs/
+
+# MCP tool outputs
+.playwright-mcp/
+
+# OS
+Thumbs.db
+
+# Node / npm (if any tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
