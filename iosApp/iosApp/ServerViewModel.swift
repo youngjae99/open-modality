@@ -4,19 +4,19 @@ import Combine
 
 class ServerViewModel: ObservableObject {
     @Published var isRunning = false
-    @Published var requestLog: [SharedRequestLogEntry] = []
+    @Published var requestLog: [RequestLogEntry] = []
     @Published var ipAddress: String = "unknown"
 
-    private var mcpServer: SharedMcpServer?
+    private var mcpServer: McpServer?
     private var timer: Timer?
 
     init() {
-        let sensors = SharedPlatformSensors()
-        let sessionManager = SharedMcpSessionManager()
-        let json = SharedKotlinx_serialization_jsonJson.companion.Default
-        let toolRegistry = SharedSensorToolRegistry(sensors: sensors, json: json)
+        let sensors = PlatformSensors()
+        let sessionManager = McpSessionManager()
+        let json = Kotlinx_serialization_jsonJson.companion as! Kotlinx_serialization_jsonJson
+        let toolRegistry = SensorToolRegistry(sensors: sensors, json: json)
 
-        mcpServer = SharedMcpServer(
+        mcpServer = McpServer(
             tools: toolRegistry.registerAll(),
             resources: toolRegistry.registerResources(),
             sessionManager: sessionManager,
@@ -43,7 +43,7 @@ class ServerViewModel: ObservableObject {
     private func startPollingLog() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self, let server = self.mcpServer else { return }
-            if let logs = server.sessions.requestLog.value as? [SharedRequestLogEntry] {
+            if let logs = server.sessions.requestLog.value as? [RequestLogEntry] {
                 DispatchQueue.main.async {
                     self.requestLog = logs
                 }

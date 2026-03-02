@@ -27,3 +27,4 @@ iosApp/.build/
 # Secrets
 *.keystore
 *.jks
+iosApp/build/

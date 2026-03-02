@@ -115,7 +115,7 @@ struct ConnectionInfoCard: View {
 }
 
 struct RequestLogItem: View {
-    let entry: SharedRequestLogEntry
+    let entry: RequestLogEntry
 
     var body: some View {
         HStack {
