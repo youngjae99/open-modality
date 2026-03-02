@@ -11,6 +11,7 @@ androidx-activityCompose = "1.9.3"
 androidx-lifecycle = "2.8.7"
 sqldelight = "2.0.2"
 multiplatformSettings = "1.2.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 # Ktor Server
@@ -44,6 +45,9 @@ sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", versi
 
 # Multiplatform Settings
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
+
+# Google Play Services
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 
 # Testing
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
