@@ -18,7 +18,9 @@ import java.net.NetworkInterface
 
 @Composable
 fun MainScreen(
-    mcpServer: McpServer = GlobalContext.get().get()
+    mcpServer: McpServer = GlobalContext.get().get(),
+    onServerStart: () -> Unit = { mcpServer.start() },
+    onServerStop: () -> Unit = { mcpServer.stop() }
 ) {
     val isRunning by mcpServer.isRunning.collectAsState()
     val requestLog by mcpServer.sessions.requestLog.collectAsState()
@@ -47,7 +49,7 @@ fun MainScreen(
 
                 // Server status card
                 ServerStatusCard(isRunning = isRunning, onToggle = {
-                    if (isRunning) mcpServer.stop() else mcpServer.start()
+                    if (isRunning) onServerStop() else onServerStart()
                 })
 
                 Spacer(modifier = Modifier.height(16.dp))
