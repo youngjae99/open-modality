@@ -45,12 +45,12 @@ That's it. Your AI can now see, hear, and feel the world through your phone.
 ```
 Claude Code / Desktop          Phone (Open Modality)
 ┌─────────────────┐           ┌──────────────────────┐
-│                  │   MCP     │  Ktor HTTP Server     │
-│  MCP Client      │◄────────►│  :8080/mcp            │
-│                  │  (WiFi)   │                        │
-│  tools/call      │           │  SensorToolRegistry    │
-│  "get_location"  │──────────►│  → PlatformSensors     │
-│                  │           │  → GPS / Accel / ...   │
+│                 │   MCP     │  Ktor HTTP Server    │
+│  MCP Client     │◄─────────►│  :8080/mcp           │
+│                 │  (WiFi)   │                      │
+│  tools/call     │           │  SensorToolRegistry  │
+│  "get_location" │──────────►│  → PlatformSensors   │
+│                 │           │  → GPS / Accel / ... │
 └─────────────────┘           └──────────────────────┘
 ```
 
