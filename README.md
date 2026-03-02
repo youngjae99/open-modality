@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/open-modality.svg" width="300" alt="Open Modality Logo">
+  <picture>
+    <source srcset="assets/open-modality-dark.svg" media="(prefers-color-scheme: dark)">
+    <img src="assets/open-modality.svg" width="300" alt="Open Modality Logo">
+</picture>
 </p>
 
 <h1 align="center">Open Modality</h1>
