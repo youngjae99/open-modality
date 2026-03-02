@@ -56,8 +56,11 @@ class McpServer(
                 anyHost()
                 allowMethod(HttpMethod.Post)
                 allowMethod(HttpMethod.Get)
+                allowMethod(HttpMethod.Delete)
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Accept)
+                allowHeader("Mcp-Session-Id")
+                exposeHeader("Mcp-Session-Id")
             }
             install(SSE)
 
@@ -67,8 +70,8 @@ class McpServer(
                     handleMcpRequest(call)
                 }
 
-                // MCP Streamable HTTP: SSE for server-initiated messages
-                sse("/mcp/sse") {
+                // MCP Streamable HTTP: GET /mcp opens SSE stream for server-initiated messages
+                sse("/mcp") {
                     // Keep connection open for server notifications
                     send(io.ktor.sse.ServerSentEvent(data = """{"jsonrpc":"2.0","method":"ping"}"""))
                 }
@@ -95,6 +98,20 @@ class McpServer(
         try {
             val body = call.receiveText()
             val request = json.decodeFromString<JsonRpcRequest>(body)
+
+            // Notifications have no id — return 202 Accepted with no body per Streamable HTTP spec
+            if (request.id == null) {
+                sessionManager.logRequest(
+                    RequestLogEntry(
+                        clientId = null,
+                        method = request.method,
+                        timestamp = startTime,
+                        durationMs = currentTimeMillis() - startTime
+                    )
+                )
+                call.respond(HttpStatusCode.Accepted)
+                return
+            }
 
             val result = processRequest(request)
             val response = JsonRpcResponse(

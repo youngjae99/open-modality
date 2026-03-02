@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonObject
  * Implements the MCP specification for tool/resource serving.
  */
 
-const val MCP_PROTOCOL_VERSION = "2024-11-05"
+const val MCP_PROTOCOL_VERSION = "2025-03-26"
 const val JSONRPC_VERSION = "2.0"
 
 // -- JSON-RPC base types --
