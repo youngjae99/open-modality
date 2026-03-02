@@ -11,6 +11,9 @@
 		3BE9F537EF112289911D344F /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323424FB38550021C4F938AB /* MainScreen.swift */; };
 		5C729A790E5FB267818CD43A /* OpenModalityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */; };
 		EFA5A698BD742F51F063663D /* ServerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */; };
+		CCDD11223344556677889901 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889901 /* DashboardView.swift */; };
+		CCDD11223344556677889902 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889902 /* SensorsView.swift */; };
+		CCDD11223344556677889903 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889903 /* LogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +21,9 @@
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenModalityApp.swift; sourceTree = "<group>"; };
 		91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerViewModel.swift; sourceTree = "<group>"; };
+		AABB11223344556677889901 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		AABB11223344556677889902 /* SensorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
+		AABB11223344556677889903 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -28,8 +34,11 @@
 			children = (
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
-				323424FB38550021C4F938AB /* MainScreen.swift */,
 				8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */,
+				323424FB38550021C4F938AB /* MainScreen.swift */,
+				AABB11223344556677889901 /* DashboardView.swift */,
+				AABB11223344556677889902 /* SensorsView.swift */,
+				AABB11223344556677889903 /* LogView.swift */,
 				91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */,
 			);
 			path = iosApp;
@@ -141,6 +150,9 @@
 				3BE9F537EF112289911D344F /* MainScreen.swift in Sources */,
 				5C729A790E5FB267818CD43A /* OpenModalityApp.swift in Sources */,
 				EFA5A698BD742F51F063663D /* ServerViewModel.swift in Sources */,
+				CCDD11223344556677889901 /* DashboardView.swift in Sources */,
+				CCDD11223344556677889902 /* SensorsView.swift in Sources */,
+				CCDD11223344556677889903 /* LogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

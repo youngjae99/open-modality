@@ -42,6 +42,8 @@ class McpServer(
 
     val sessions: McpSessionManager get() = sessionManager
 
+    val toolCount: Int get() = tools.size
+
     private val toolMap: Map<String, McpTool> = tools.associateBy { it.name }
     private val resourceMap: Map<String, McpResource> = resources.associateBy { it.uri }
 

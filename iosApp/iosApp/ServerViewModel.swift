@@ -2,28 +2,52 @@ import Foundation
 import Shared
 import Combine
 
+// MARK: - Display Models
+
+struct SensorDisplayInfo: Identifiable {
+    let id: String
+    let name: String
+    let permission: String
+}
+
+struct SensorCategoryInfo: Identifiable {
+    let id: String
+    let name: String
+    let icon: String
+    let sensors: [SensorDisplayInfo]
+}
+
+// MARK: - ViewModel
+
 class ServerViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var requestLog: [RequestLogEntry] = []
     @Published var ipAddress: String = "unknown"
+    @Published var sensorCategories: [SensorCategoryInfo] = []
+    @Published var toolCount: Int = 0
 
+    private let platformSensors: PlatformSensors
     private var mcpServer: McpServer?
     private var timer: Timer?
 
     init() {
-        let sensors = PlatformSensors()
+        platformSensors = PlatformSensors()
         let sessionManager = McpSessionManager()
         let json = Kotlinx_serialization_jsonJson.companion as! Kotlinx_serialization_jsonJson
-        let toolRegistry = SensorToolRegistry(sensors: sensors, json: json)
+        let toolRegistry = SensorToolRegistry(sensors: platformSensors, json: json)
+
+        let tools = toolRegistry.registerAll()
+        toolCount = Int(tools.count)
 
         mcpServer = McpServer(
-            tools: toolRegistry.registerAll(),
+            tools: tools,
             resources: toolRegistry.registerResources(),
             sessionManager: sessionManager,
             port: 8080
         )
 
         ipAddress = getLocalIPAddress()
+        loadSensors()
     }
 
     func toggleServer() {
@@ -40,6 +64,8 @@ class ServerViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Private
+
     private func startPollingLog() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self, let server = self.mcpServer else { return }
@@ -48,6 +74,44 @@ class ServerViewModel: ObservableObject {
                     self.requestLog = logs
                 }
             }
+        }
+    }
+
+    private func loadSensors() {
+        let available = platformSensors.availableSensors()
+
+        let categoryMeta: [(key: String, name: String, icon: String)] = [
+            ("VISION", "Vision", "camera"),
+            ("AUDIO", "Audio", "waveform"),
+            ("LOCATION", "Location", "location"),
+            ("MOTION", "Motion", "gyroscope"),
+            ("ENVIRONMENT", "Environment", "cloud.sun"),
+            ("CONNECTIVITY", "Connectivity", "antenna.radiowaves.left.and.right"),
+            ("DEVICE", "Device", "iphone"),
+        ]
+
+        var grouped: [String: [SensorDisplayInfo]] = [:]
+
+        for sensor in available {
+            guard let sensorType = sensor as? SensorType else { continue }
+            let catKey = sensorType.category.name
+            let perm = platformSensors.permissionStatus(sensor: sensorType)
+            let info = SensorDisplayInfo(
+                id: sensorType.id,
+                name: sensorType.displayName,
+                permission: perm.name
+            )
+            grouped[catKey, default: []].append(info)
+        }
+
+        sensorCategories = categoryMeta.compactMap { meta in
+            guard let sensors = grouped[meta.key], !sensors.isEmpty else { return nil }
+            return SensorCategoryInfo(
+                id: meta.key,
+                name: meta.name,
+                icon: meta.icon,
+                sensors: sensors
+            )
         }
     }
 
