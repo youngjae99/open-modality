@@ -53,6 +53,7 @@ fun MainScreen(
                 Tab.DASHBOARD -> DashboardScreen(
                     isRunning = isRunning,
                     toolCount = mcpServer.toolCount,
+                    currentPin = mcpServer.currentPin,
                     onToggle = { if (isRunning) onServerStop() else onServerStart() },
                     modifier = Modifier.padding(padding)
                 )

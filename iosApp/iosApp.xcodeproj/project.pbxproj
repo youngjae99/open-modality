@@ -7,24 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03125971FBE77DF5A89B9331 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B04DC25D15DD8FC7DE1A63 /* LogView.swift */; };
+		1522652CE06EB4A8D3E2C320 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3299C5366EABB5D28315022A /* SensorsView.swift */; };
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
+		36759AC468461933588A2B8B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6274F67061B81BE4AA52A1 /* DashboardView.swift */; };
 		3BE9F537EF112289911D344F /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323424FB38550021C4F938AB /* MainScreen.swift */; };
 		5C729A790E5FB267818CD43A /* OpenModalityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */; };
 		EFA5A698BD742F51F063663D /* ServerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */; };
-		CCDD11223344556677889901 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889901 /* DashboardView.swift */; };
-		CCDD11223344556677889902 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889902 /* SensorsView.swift */; };
-		CCDD11223344556677889903 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB11223344556677889903 /* LogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		323424FB38550021C4F938AB /* MainScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreen.swift; sourceTree = "<group>"; };
+		3299C5366EABB5D28315022A /* SensorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenModalityApp.swift; sourceTree = "<group>"; };
 		91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerViewModel.swift; sourceTree = "<group>"; };
-		AABB11223344556677889901 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
-		AABB11223344556677889902 /* SensorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorsView.swift; sourceTree = "<group>"; };
-		AABB11223344556677889903 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DC6274F67061B81BE4AA52A1 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		F2B04DC25D15DD8FC7DE1A63 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		F543015C899423D4B01CEB2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -33,12 +33,12 @@
 			isa = PBXGroup;
 			children = (
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
+				DC6274F67061B81BE4AA52A1 /* DashboardView.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
-				8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */,
+				F2B04DC25D15DD8FC7DE1A63 /* LogView.swift */,
 				323424FB38550021C4F938AB /* MainScreen.swift */,
-				AABB11223344556677889901 /* DashboardView.swift */,
-				AABB11223344556677889902 /* SensorsView.swift */,
-				AABB11223344556677889903 /* LogView.swift */,
+				8A4C117DFC408B01814E8B8B /* OpenModalityApp.swift */,
+				3299C5366EABB5D28315022A /* SensorsView.swift */,
 				91EF3F577BDFA386C285EC73 /* ServerViewModel.swift */,
 			);
 			path = iosApp;
@@ -147,12 +147,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36759AC468461933588A2B8B /* DashboardView.swift in Sources */,
+				03125971FBE77DF5A89B9331 /* LogView.swift in Sources */,
 				3BE9F537EF112289911D344F /* MainScreen.swift in Sources */,
 				5C729A790E5FB267818CD43A /* OpenModalityApp.swift in Sources */,
+				1522652CE06EB4A8D3E2C320 /* SensorsView.swift in Sources */,
 				EFA5A698BD742F51F063663D /* ServerViewModel.swift in Sources */,
-				CCDD11223344556677889901 /* DashboardView.swift in Sources */,
-				CCDD11223344556677889902 /* SensorsView.swift in Sources */,
-				CCDD11223344556677889903 /* LogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -14,7 +14,7 @@ struct DashboardView: View {
                     )
 
                     if viewModel.isRunning {
-                        ConnectionInfoCard(ipAddress: viewModel.ipAddress)
+                        ConnectionInfoCard(ipAddress: viewModel.ipAddress, currentPin: viewModel.currentPin)
 
                         ActiveToolsCard(toolCount: viewModel.toolCount)
                     }
@@ -71,6 +71,7 @@ struct ServerStatusCard: View {
 
 struct ConnectionInfoCard: View {
     let ipAddress: String
+    let currentPin: String
     @State private var copiedCmd = false
     @State private var copiedJson = false
 
@@ -86,6 +87,25 @@ struct ConnectionInfoCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Label("MCP Connection", systemImage: "link")
                 .font(.headline)
+
+            // PIN section
+            VStack(spacing: 4) {
+                Text("Authorization PIN")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(currentPin)
+                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                    .kerning(8)
+                Text("Enter this when Claude Code opens the browser")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+            Divider()
 
             // CLI command section
             VStack(alignment: .leading, spacing: 8) {

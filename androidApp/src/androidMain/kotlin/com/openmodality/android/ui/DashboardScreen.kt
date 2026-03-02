@@ -23,6 +23,7 @@ import java.net.NetworkInterface
 fun DashboardScreen(
     isRunning: Boolean,
     toolCount: Int,
+    currentPin: String,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -54,7 +55,7 @@ fun DashboardScreen(
             ServerStatusCard(isRunning = isRunning, onToggle = onToggle)
 
             if (isRunning) {
-                ConnectionInfoCard()
+                ConnectionInfoCard(currentPin = currentPin)
                 ToolCountCard(toolCount = toolCount)
             }
 
@@ -131,7 +132,7 @@ private fun ServerStatusCard(isRunning: Boolean, onToggle: () -> Unit) {
 }
 
 @Composable
-private fun ConnectionInfoCard() {
+private fun ConnectionInfoCard(currentPin: String) {
     val ipAddress = remember { getLocalIpAddress() }
     val clipboardManager = LocalClipboardManager.current
     var copiedCmd by remember { mutableStateOf(false) }
@@ -153,6 +154,42 @@ private fun ConnectionInfoCard() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("MCP Connection", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+
+            // PIN section
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Authorization PIN",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = currentPin,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 8.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        "Enter this when Claude Code opens the browser",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            HorizontalDivider()
 
             // CLI command section
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -23,6 +23,7 @@ class ServerViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var requestLog: [RequestLogEntry] = []
     @Published var ipAddress: String = "unknown"
+    @Published var currentPin: String = ""
     @Published var sensorCategories: [SensorCategoryInfo] = []
     @Published var toolCount: Int = 0
 
@@ -47,6 +48,7 @@ class ServerViewModel: ObservableObject {
         )
 
         ipAddress = getLocalIPAddress()
+        currentPin = mcpServer?.currentPin ?? ""
         loadSensors()
     }
 

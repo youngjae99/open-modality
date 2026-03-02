@@ -1,5 +1,8 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.openmodality.mcp
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -26,16 +29,16 @@ data class JsonRpcRequest(
 @Serializable
 data class JsonRpcResponse(
     val jsonrpc: String = JSONRPC_VERSION,
-    val id: JsonElement? = null,
-    val result: JsonElement? = null,
-    val error: JsonRpcError? = null
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val id: JsonElement? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val result: JsonElement? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val error: JsonRpcError? = null
 )
 
 @Serializable
 data class JsonRpcError(
     val code: Int,
     val message: String,
-    val data: JsonElement? = null
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val data: JsonElement? = null
 )
 
 // -- MCP Initialize --
