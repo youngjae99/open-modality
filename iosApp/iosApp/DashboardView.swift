@@ -71,50 +71,81 @@ struct ServerStatusCard: View {
 
 struct ConnectionInfoCard: View {
     let ipAddress: String
-    @State private var copied = false
+    @State private var copiedCmd = false
+    @State private var copiedJson = false
+
+    private var cliCommand: String {
+        "claude mcp add --transport http open-modality http://\(ipAddress):8080/mcp"
+    }
 
     private var configJSON: String {
-        """
-        {
-          "mcpServers": {
-            "open-modality": {
-              "url": "http://\(ipAddress):8080/mcp"
-            }
-          }
-        }
-        """
+        "{\n  \"mcpServers\": {\n    \"open-modality\": {\n      \"url\": \"http://\(ipAddress):8080/mcp\"\n    }\n  }\n}"
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Label("MCP Connection", systemImage: "link")
                 .font(.headline)
 
-            Text("Add this to your Claude Code MCP config:")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            // CLI command section
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Claude Code CLI:")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
 
-            Text(configJSON)
-                .font(.system(.caption, design: .monospaced))
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.tertiarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                Text(cliCommand)
+                    .font(.system(.caption, design: .monospaced))
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.tertiarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            Button {
-                UIPasteboard.general.string = configJSON
-                copied = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    copied = false
+                Button {
+                    UIPasteboard.general.string = cliCommand
+                    copiedCmd = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        copiedCmd = false
+                    }
+                } label: {
+                    Label(
+                        copiedCmd ? "Copied!" : "Copy Command",
+                        systemImage: copiedCmd ? "checkmark" : "doc.on.doc"
+                    )
+                    .frame(maxWidth: .infinity)
                 }
-            } label: {
-                Label(
-                    copied ? "Copied!" : "Copy to Clipboard",
-                    systemImage: copied ? "checkmark" : "doc.on.doc"
-                )
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
+
+            Divider()
+
+            // JSON config section
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Or add to MCP config file:")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+
+                Text(configJSON)
+                    .font(.system(.caption, design: .monospaced))
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.tertiarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                Button {
+                    UIPasteboard.general.string = configJSON
+                    copiedJson = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        copiedJson = false
+                    }
+                } label: {
+                    Label(
+                        copiedJson ? "Copied!" : "Copy Config JSON",
+                        systemImage: copiedJson ? "checkmark" : "doc.on.doc"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))

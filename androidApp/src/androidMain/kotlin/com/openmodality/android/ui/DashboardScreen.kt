@@ -134,8 +134,10 @@ private fun ServerStatusCard(isRunning: Boolean, onToggle: () -> Unit) {
 private fun ConnectionInfoCard() {
     val ipAddress = remember { getLocalIpAddress() }
     val clipboardManager = LocalClipboardManager.current
-    var copied by remember { mutableStateOf(false) }
+    var copiedCmd by remember { mutableStateOf(false) }
+    var copiedJson by remember { mutableStateOf(false) }
 
+    val cliCommand = "claude mcp add --transport http open-modality http://$ipAddress:8080/mcp"
     val configJSON = """
 {
   "mcpServers": {
@@ -148,35 +150,70 @@ private fun ConnectionInfoCard() {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("MCP Connection", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Text(
-                "Add this to your Claude Code MCP config:",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = MaterialTheme.shapes.small
-            ) {
+            // CLI command section
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = configJSON,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(12.dp)
+                    "Claude Code CLI:",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = cliCommand,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(cliCommand))
+                        copiedCmd = true
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (copiedCmd) "Copied!" else "Copy Command")
+                }
             }
 
-            OutlinedButton(
-                onClick = {
-                    clipboardManager.setText(AnnotatedString(configJSON))
-                    copied = true
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (copied) "Copied!" else "Copy to Clipboard")
+            HorizontalDivider()
+
+            // JSON config section
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Or add to MCP config file:",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = configJSON,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(configJSON))
+                        copiedJson = true
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (copiedJson) "Copied!" else "Copy Config JSON")
+                }
             }
         }
     }
