@@ -9,7 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.openmodality.mcp.McpServer
+import com.openmodality.server.OpenModalityServer
 import com.openmodality.sensor.PlatformSensors
 import org.koin.core.context.GlobalContext
 
@@ -25,13 +25,13 @@ private enum class Tab(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    mcpServer: McpServer = GlobalContext.get().get(),
+    server: OpenModalityServer = GlobalContext.get().get(),
     platformSensors: PlatformSensors = GlobalContext.get().get(),
-    onServerStart: () -> Unit = { mcpServer.start() },
-    onServerStop: () -> Unit = { mcpServer.stop() }
+    onServerStart: () -> Unit = { server.start() },
+    onServerStop: () -> Unit = { server.stop() }
 ) {
-    val isRunning by mcpServer.isRunning.collectAsState()
-    val requestLog by mcpServer.sessions.requestLog.collectAsState()
+    val isRunning by server.isRunning.collectAsState()
+    val requestLog by server.sessions.requestLog.collectAsState()
     var selectedTab by remember { mutableStateOf(Tab.DASHBOARD) }
 
     MaterialTheme {
@@ -52,8 +52,8 @@ fun MainScreen(
             when (selectedTab) {
                 Tab.DASHBOARD -> DashboardScreen(
                     isRunning = isRunning,
-                    toolCount = mcpServer.toolCount,
-                    currentPin = mcpServer.currentPin,
+                    toolCount = server.toolCount,
+                    currentPin = server.currentPin,
                     onToggle = { if (isRunning) onServerStop() else onServerStart() },
                     modifier = Modifier.padding(padding)
                 )

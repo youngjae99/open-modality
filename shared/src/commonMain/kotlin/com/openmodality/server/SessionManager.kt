@@ -1,20 +1,18 @@
-package com.openmodality.mcp
+package com.openmodality.server
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Tracks connected MCP client sessions.
+ * Tracks connected WebSocket clients and request log.
  */
 data class ConnectedClient(
     val id: String,
-    val name: String,
-    val version: String,
     val connectedAt: Long
 )
 
-class McpSessionManager {
+class SessionManager {
     private val _clients = MutableStateFlow<List<ConnectedClient>>(emptyList())
     val clients: StateFlow<List<ConnectedClient>> = _clients.asStateFlow()
 
@@ -31,7 +29,6 @@ class McpSessionManager {
 
     fun logRequest(entry: RequestLogEntry) {
         val current = _requestLog.value
-        // Keep last 100 entries
         _requestLog.value = (current + entry).takeLast(100)
     }
 }

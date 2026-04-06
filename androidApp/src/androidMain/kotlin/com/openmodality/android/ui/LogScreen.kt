@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.openmodality.mcp.RequestLogEntry
+import com.openmodality.server.RequestLogEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +74,7 @@ private fun EmptyLogState(modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "MCP tool calls will appear here\nwhen clients connect to the server.",
+                text = "Tool calls will appear here\nwhen clients connect to the server.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(horizontal = 32.dp)

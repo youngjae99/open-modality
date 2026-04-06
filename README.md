@@ -6,7 +6,7 @@
 </p>
 
 <h1 align="center">Open Modality</h1>
-<p align="center">Give AI senses. Your phone's sensors as MCP tools.</p>
+<p align="center">Give AI senses. Your phone's sensors over WebSocket.</p>
 
 <p align="center">
   <a href="#quickstart">Quickstart</a> ·
@@ -18,24 +18,40 @@
 
 ---
 
-Open Modality turns your smartphone into a sensor gateway for AI agents. It runs a local [MCP](https://modelcontextprotocol.io/) server on your phone, exposing every hardware sensor as a tool that Claude Code, Claude Desktop, or any MCP-compatible client can call over the network.
+Open Modality turns your smartphone into a sensor gateway for AI agents. It runs a WebSocket server on your phone, exposing every hardware sensor as a callable tool. Any WebSocket client — Python scripts, AI agents, browser apps — can connect and use the sensors in real time.
 
 No cloud. No middleman. Your phone, your sensors, your data.
 
 ## Quickstart
 
 1. **Install the app** on your Android or iOS device
-2. **Tap Start** to launch the MCP server
-3. **Add to your MCP client** — the app shows the config:
+2. **Tap Start** to launch the sensor server
+3. **Connect via WebSocket** using the PIN shown in the app:
 
-```json
-{
-  "mcpServers": {
-    "open-modality": {
-      "url": "http://<phone-ip>:8080/mcp"
-    }
-  }
-}
+```python
+import websocket, json
+
+ws = websocket.create_connection("ws://<phone-ip>:8080/ws?pin=<PIN>")
+
+# List available tools
+ws.send(json.dumps({"id": "1", "method": "list_tools"}))
+tools = json.loads(ws.recv())
+
+# Read a sensor
+ws.send(json.dumps({"id": "2", "method": "get_location"}))
+location = json.loads(ws.recv())
+print(location)
+
+ws.close()
+```
+
+Or use the HTTP endpoint for one-shot calls:
+
+```bash
+curl -X POST http://<phone-ip>:8080/call \
+  -H "X-Pin: <PIN>" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"1","method":"get_battery"}'
 ```
 
 That's it. Your AI can now see, hear, and feel the world through your phone.
@@ -43,20 +59,48 @@ That's it. Your AI can now see, hear, and feel the world through your phone.
 ## How it works
 
 ```
-Claude Code / Desktop          Phone (Open Modality)
+AI Agent / Script              Phone (Open Modality)
 ┌─────────────────┐           ┌──────────────────────┐
-│                 │   MCP     │  Ktor HTTP Server    │
-│  MCP Client     │◄─────────►│  :8080/mcp           │
-│                 │  (WiFi)   │                      │
-│  tools/call     │           │  SensorToolRegistry  │
+│                 │    WS     │  Ktor WebSocket      │
+│  WebSocket      │◄─────────►│  :8080/ws            │
+│  Client         │  (WiFi)   │                      │
+│                 │           │  SensorToolRegistry  │
 │  "get_location" │──────────►│  → PlatformSensors   │
 │                 │           │  → GPS / Accel / ... │
 └─────────────────┘           └──────────────────────┘
 ```
 
-- **Transport**: MCP Streamable HTTP — `POST /mcp` for requests, `GET /mcp/sse` for streaming
-- **Protocol**: JSON-RPC 2.0 with standard MCP `tools/list`, `tools/call`, `resources/list`, `resources/read`
-- **Architecture**: Kotlin Multiplatform — shared MCP server and sensor abstraction, native implementations per platform
+### Endpoints
+
+| Endpoint | Auth | Description |
+|----------|------|-------------|
+| `ws://<ip>:8080/ws?pin=<PIN>` | PIN (query param) | WebSocket — persistent connection for multiple calls |
+| `POST http://<ip>:8080/call` | PIN (`X-Pin` header) | HTTP — single request-response |
+| `GET http://<ip>:8080/info` | None | Discovery — server info, tool list, sensor list |
+| `GET http://<ip>:8080/health` | None | Health check |
+
+### Protocol
+
+Simple JSON request-response over WebSocket:
+
+```jsonc
+// Request (client → phone)
+{"id": "1", "method": "take_photo", "params": {"camera": "back"}}
+
+// Response (phone → client)
+{"id": "1", "result": {"content": [{"type": "image", "data": "base64...", "mimeType": "image/jpeg"}]}}
+
+// Error response
+{"id": "1", "error": {"code": -1, "message": "Camera not available"}}
+```
+
+Built-in methods: `list_tools`, `get_info`, `ping`. Any registered tool name (e.g. `take_photo`) is also a valid method.
+
+### Architecture
+
+- **Transport**: WebSocket (Ktor CIO) with PIN-based auth
+- **Protocol**: Simple JSON request-response (no JSON-RPC overhead)
+- **Code**: Kotlin Multiplatform — shared server and sensor abstraction, native implementations per platform
 
 ## Available tools
 
@@ -75,12 +119,59 @@ Claude Code / Desktop          Phone (Open Modality)
 | `get_ambient_sound_level` | Ambient noise level (dB) | Y | - |
 | `get_battery` | Battery level, charging state, thermal state | Y | Y |
 | `get_device_info` | Model, OS, screen size, available sensors | Y | Y |
-| `take_photo` | Capture photo from front/back camera | Soon | Soon |
-| `record_audio` | Record audio with optional transcription | Soon | Soon |
-| `scan_bluetooth` | Scan nearby BLE devices | Soon | Soon |
-| `scan_wifi` | Scan nearby WiFi networks | Soon | Soon |
-| `read_nfc` | Read NFC tags | Soon | Soon |
-| `scan_lidar` | LiDAR depth scan (Pro models) | - | Soon |
+| `take_photo` | Capture photo from front/back camera | Y | Y |
+| `record_audio` | Record audio with optional transcription | Y | Y |
+| `scan_bluetooth` | Scan nearby BLE devices | Y | Y |
+| `scan_wifi` | Scan nearby WiFi networks | Y | Y |
+| `read_nfc` | Read NFC tags | Y | Y |
+| `scan_lidar` | LiDAR depth scan (Pro models) | - | Y |
+
+## Connecting an AI Agent
+
+### Option 1: Direct WebSocket (recommended)
+
+Any language/framework that supports WebSocket can connect directly:
+
+```python
+# Python AI agent example
+import websocket, json
+
+def call_tool(ws, method, params=None):
+    msg = {"id": str(id(method)), "method": method}
+    if params:
+        msg["params"] = params
+    ws.send(json.dumps(msg))
+    return json.loads(ws.recv())["result"]
+
+ws = websocket.create_connection("ws://192.168.1.100:8080/ws?pin=123456")
+photo = call_tool(ws, "take_photo", {"camera": "back"})
+location = call_tool(ws, "get_location")
+```
+
+### Option 2: MCP Bridge (for Claude Code / Claude Desktop)
+
+Use a thin MCP bridge that translates between MCP and WebSocket:
+
+```
+Phone (WebSocket) ←→ MCP Bridge (Desktop) ←→ Claude Code (stdio)
+```
+
+See `bridge/` directory for the MCP bridge implementation (coming soon).
+
+### Option 3: HTTP one-shot
+
+For agents that work with simple HTTP function calling:
+
+```python
+import requests
+
+response = requests.post(
+    "http://192.168.1.100:8080/call",
+    headers={"X-Pin": "123456", "Content-Type": "application/json"},
+    json={"id": "1", "method": "get_location"}
+)
+print(response.json())
+```
 
 ## Building from source
 
@@ -129,9 +220,9 @@ open iosApp/iosApp.xcodeproj
 open-modality/
 ├── shared/                          # Kotlin Multiplatform shared module
 │   └── src/
-│       ├── commonMain/              # MCP server, protocol, sensor abstraction
+│       ├── commonMain/              # Server, protocol, sensor abstraction
 │       │   └── kotlin/com/openmodality/
-│       │       ├── mcp/             # McpServer, McpProtocol, McpSession
+│       │       ├── server/          # OpenModalityServer, Protocol, SessionManager
 │       │       ├── sensor/          # PlatformSensors (expect), SensorType
 │       │       ├── tools/           # SensorToolRegistry, SchemaHelper
 │       │       └── di/              # Koin DI module
@@ -149,14 +240,13 @@ open-modality/
 │       ├── OpenModalityApp.swift
 │       ├── ServerViewModel.swift
 │       └── MainScreen.swift
-└── mcp-config/                      # Example MCP client configs
 ```
 
 ## Tech stack
 
 - **Kotlin 2.1.0** — Multiplatform shared logic
-- **Ktor 3.0.3** — Embedded HTTP server (CIO engine)
-- **kotlinx.serialization** — JSON-RPC 2.0 message encoding
+- **Ktor 3.0.3** — Embedded WebSocket server (CIO engine)
+- **kotlinx.serialization** — JSON message encoding
 - **Koin 4.0.0** — Dependency injection
 - **Jetpack Compose** — Android UI
 - **SwiftUI** — iOS UI
@@ -165,20 +255,23 @@ open-modality/
 
 ## Roadmap
 
-- [x] MCP server with Streamable HTTP transport
+- [x] WebSocket server with PIN auth
+- [x] HTTP one-shot endpoint
+- [x] Discovery endpoint (`GET /info`)
 - [x] Motion sensors (accelerometer, gyroscope, magnetometer, device motion)
 - [x] Location (GPS, reverse geocoding)
 - [x] Environment sensors (barometer, ambient light, proximity)
 - [x] Device info and battery status
-- [ ] Camera capture (photo/video)
-- [ ] Audio recording + speech-to-text
-- [ ] Bluetooth LE scanning
-- [ ] WiFi network scanning
-- [ ] NFC tag reading
-- [ ] LiDAR depth scanning (iOS)
-- [ ] Security layer (pairing code, access control, audit log)
-- [ ] QR code for easy connection setup
+- [x] Camera capture
+- [x] Audio recording
+- [x] Bluetooth LE scanning
+- [x] WiFi network scanning
+- [x] NFC tag reading
+- [x] LiDAR depth scanning (iOS)
+- [ ] MCP bridge for Claude Code / Claude Desktop
 - [ ] mDNS/Bonjour auto-discovery
+- [ ] Sensor streaming (continuous data push)
+- [ ] QR code for easy connection setup
 
 ## Contributing
 
@@ -189,7 +282,7 @@ If you're adding a new sensor:
 1. Add the sensor type to `SensorType.kt`
 2. Add result model to `SensorResults.kt`
 3. Add `expect`/`actual` methods to `PlatformSensors.kt`
-4. Register the MCP tool in `SensorToolRegistry.kt`
+4. Register the tool in `SensorToolRegistry.kt`
 5. Build and test on both platforms
 
 ## License

@@ -1,4 +1,4 @@
-package com.openmodality.mcp
+package com.openmodality.server
 
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970

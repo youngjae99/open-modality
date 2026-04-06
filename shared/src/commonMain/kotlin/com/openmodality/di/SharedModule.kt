@@ -1,7 +1,7 @@
 package com.openmodality.di
 
-import com.openmodality.mcp.McpServer
-import com.openmodality.mcp.McpSessionManager
+import com.openmodality.server.OpenModalityServer
+import com.openmodality.server.SessionManager
 import com.openmodality.sensor.PlatformSensors
 import com.openmodality.tools.SensorToolRegistry
 import org.koin.dsl.module
@@ -12,13 +12,13 @@ import org.koin.dsl.module
  */
 fun sharedModule(platformSensors: PlatformSensors) = module {
     single { platformSensors }
-    single { McpSessionManager() }
+    single { SessionManager() }
     single { SensorToolRegistry(get()) }
     single {
         val registry: SensorToolRegistry = get()
-        McpServer(
+        OpenModalityServer(
             tools = registry.registerAll(),
-            resources = registry.registerResources(),
+            sensors = get(),
             sessionManager = get()
         )
     }

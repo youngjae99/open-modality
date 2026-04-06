@@ -9,14 +9,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import com.openmodality.android.background.McpServerService
+import com.openmodality.android.background.SensorServerService
 import com.openmodality.android.ui.MainScreen
-import com.openmodality.mcp.McpServer
+import com.openmodality.server.OpenModalityServer
 import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
 
-    private val mcpServer: McpServer by lazy {
+    private val server: OpenModalityServer by lazy {
         GlobalContext.get().get()
     }
 
@@ -31,20 +31,20 @@ class MainActivity : ComponentActivity() {
         requestSensorPermissions()
         setContent {
             MainScreen(
-                onServerStart = { startMcpService() },
-                onServerStop = { stopMcpService() }
+                onServerStart = { startServerService() },
+                onServerStop = { stopServerService() }
             )
         }
     }
 
-    private fun startMcpService() {
-        val intent = Intent(this, McpServerService::class.java)
+    private fun startServerService() {
+        val intent = Intent(this, SensorServerService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
 
-    private fun stopMcpService() {
-        mcpServer.stop()
-        stopService(Intent(this, McpServerService::class.java))
+    private fun stopServerService() {
+        server.stop()
+        stopService(Intent(this, SensorServerService::class.java))
     }
 
     private fun requestSensorPermissions() {
