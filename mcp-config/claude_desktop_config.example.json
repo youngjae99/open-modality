@@ -1,7 +1,0 @@
-{
-  "mcpServers": {
-    "open-modality": {
-      "url": "http://PHONE_IP_ADDRESS:8080/mcp"
-    }
-  }
-}

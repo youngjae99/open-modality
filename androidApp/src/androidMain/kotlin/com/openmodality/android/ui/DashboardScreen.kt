@@ -34,7 +34,7 @@ fun DashboardScreen(
                     Column {
                         Text("Open Modality")
                         Text(
-                            "Smartphone Sensor MCP Server",
+                            "Smartphone Sensor Server",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -102,7 +102,7 @@ private fun ServerStatusCard(isRunning: Boolean, onToggle: () -> Unit) {
                     )
                     Text(
                         text = if (isRunning)
-                            "Accepting MCP connections on port 8080"
+                            "Accepting connections on port 8080"
                         else
                             "Tap Start to begin accepting connections",
                         fontSize = 13.sp,
@@ -135,25 +135,31 @@ private fun ServerStatusCard(isRunning: Boolean, onToggle: () -> Unit) {
 private fun ConnectionInfoCard(currentPin: String) {
     val ipAddress = remember { getLocalIpAddress() }
     val clipboardManager = LocalClipboardManager.current
-    var copiedCmd by remember { mutableStateOf(false) }
-    var copiedJson by remember { mutableStateOf(false) }
+    var copiedWs by remember { mutableStateOf(false) }
+    var copiedPython by remember { mutableStateOf(false) }
 
-    val cliCommand = "claude mcp add --transport http open-modality http://$ipAddress:8080/mcp"
-    val configJSON = """
-{
-  "mcpServers": {
-    "open-modality": {
-      "url": "http://$ipAddress:8080/mcp"
-    }
-  }
-}""".trimStart()
+    val wsUrl = "ws://$ipAddress:8080/ws?pin=$currentPin"
+    val pythonSnippet = """
+import websocket, json
+
+ws = websocket.create_connection("$wsUrl")
+
+# List available tools
+ws.send(json.dumps({"id": "1", "method": "list_tools"}))
+print(json.loads(ws.recv()))
+
+# Call a tool
+ws.send(json.dumps({"id": "2", "method": "get_location"}))
+print(json.loads(ws.recv()))
+
+ws.close()""".trimStart()
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("MCP Connection", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            Text("Connection", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
 
             // PIN section
             Surface(
@@ -168,7 +174,7 @@ private fun ConnectionInfoCard(currentPin: String) {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        "Authorization PIN",
+                        "PIN",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -182,7 +188,7 @@ private fun ConnectionInfoCard(currentPin: String) {
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        "Enter this when Claude Code opens the browser",
+                        "Use this PIN to connect",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -191,10 +197,10 @@ private fun ConnectionInfoCard(currentPin: String) {
 
             HorizontalDivider()
 
-            // CLI command section
+            // WebSocket URL section
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Claude Code CLI:",
+                    "WebSocket URL:",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -204,7 +210,7 @@ private fun ConnectionInfoCard(currentPin: String) {
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = cliCommand,
+                        text = wsUrl,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(12.dp)
@@ -212,21 +218,21 @@ private fun ConnectionInfoCard(currentPin: String) {
                 }
                 OutlinedButton(
                     onClick = {
-                        clipboardManager.setText(AnnotatedString(cliCommand))
-                        copiedCmd = true
+                        clipboardManager.setText(AnnotatedString(wsUrl))
+                        copiedWs = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (copiedCmd) "Copied!" else "Copy Command")
+                    Text(if (copiedWs) "Copied!" else "Copy URL")
                 }
             }
 
             HorizontalDivider()
 
-            // JSON config section
+            // HTTP endpoint section
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Or add to MCP config file:",
+                    "HTTP (one-shot):",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -236,20 +242,43 @@ private fun ConnectionInfoCard(currentPin: String) {
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = configJSON,
+                        text = "POST http://$ipAddress:8080/call\nHeader: X-Pin: $currentPin",
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
+            }
+
+            HorizontalDivider()
+
+            // Python example
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Python example:",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = pythonSnippet,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
                 OutlinedButton(
                     onClick = {
-                        clipboardManager.setText(AnnotatedString(configJSON))
-                        copiedJson = true
+                        clipboardManager.setText(AnnotatedString(pythonSnippet))
+                        copiedPython = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (copiedJson) "Copied!" else "Copy Config JSON")
+                    Text(if (copiedPython) "Copied!" else "Copy Python Example")
                 }
             }
         }
@@ -271,7 +300,7 @@ private fun ToolCountCard(toolCount: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "$toolCount MCP tools registered",
+                "$toolCount tools available",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
